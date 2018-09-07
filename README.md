@@ -112,8 +112,7 @@ $req->request = [
                 'userId' => 1
             ]
         ]
-    ]
-];
+    ];
 $req->options = [
     CURLOPT_NOBODY => false,
     CURLOPT_HEADER => false,
