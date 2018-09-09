@@ -10,7 +10,7 @@ namespace aalfiann;
      */
     class ParallelRequest {
 
-        var $request,$delayTime=10000,$httpStatusOnly=false,$options=array(),$response=array();
+        var $request,$delayTime=10000,$encoded=false,$httpStatusOnly=false,$options=array(),$response=array();
         
         /**
          * Set request
@@ -39,6 +39,16 @@ namespace aalfiann;
          */
         public function setHttpStatusOnly($httpStatusOnly=true){
             $this->httpStatusOnly = $httpStatusOnly;
+            return $this;
+        }
+
+        /**
+         * Set encoded data post
+         * @param encoded if set true then data post will be url encoded.
+         * @return this for chaining purpose
+         */
+        public function setEncoded($encoded=true){
+            $this->encoded = $encoded;
             return $this;
         }
 
@@ -81,7 +91,11 @@ namespace aalfiann;
                 if (is_array($d)) {
                     if (!empty($d['post'])) {
                         curl_setopt($curly[$id], CURLOPT_POST,       1);
-                        curl_setopt($curly[$id], CURLOPT_POSTFIELDS, $d['post']);
+                        if ($this->encoded) {
+                            curl_setopt($curly[$id], CURLOPT_POSTFIELDS, http_build_query($d['post']));
+                        } else {
+                            curl_setopt($curly[$id], CURLOPT_POSTFIELDS, $d['post']);
+                        }
                     }
                 }
            
