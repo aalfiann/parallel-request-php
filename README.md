@@ -75,6 +75,7 @@ $req->request = [
             ]
         ]
     ];
+$req->encoded = true;
 $req->options = [
     CURLOPT_NOBODY => false,
     CURLOPT_HEADER => false,
