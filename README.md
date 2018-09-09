@@ -1,6 +1,6 @@
 # ParallelRequest PHP
 
-[![Version](https://img.shields.io/badge/stable-1.0.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
+[![Version](https://img.shields.io/badge/stable-1.0.2-green.svg)](https://github.com/aalfiann/parallel-request-php)
 [![Total Downloads](https://poser.pugx.org/aalfiann/parallel-request-php/downloads)](https://packagist.org/packages/aalfiann/parallel-request-php)
 [![License](https://poser.pugx.org/aalfiann/parallel-request-php/license)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
 
@@ -139,6 +139,7 @@ echo $req->setRequest('http://jsonplaceholder.typicode.com/posts')->send()->getR
 - **setOptions($options=array())** is to set the options of CURLOPT.
 - **setHttpStatusOnly($httpStatusOnly=false)** if set to true then output response will converted to http status code.
 - **setDelayTime($time=10000)** is the delay execution time for cpu to take a rest. Default is 10000 (10ms) in microseconds.
+- **setEncoded($encoded=true)** is to encode the data post. If you did not use this, the default data post is not encoded.
 - **send()** is curl are sending the request (silently without any output)
 - **getResponse()** is to get the output response (the return data could be string or array).
 - **getResponseJson()** is to get the output response with json formatted.
