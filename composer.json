@@ -1,7 +1,7 @@
 {
     "name": "aalfiann/parallel-request-php",
-    "description": "A PHP class to create multiple request in parallel.",
-    "keywords": ["request","curl","parallel","async"],
+    "description": "A PHP class to create multiple request in parallel (non-blocking).",
+    "keywords": ["request","curl","parallel","async","non-blocking"],
     "authors": [
         {
             "name": "M ABD AZIZ ALFIAN",
