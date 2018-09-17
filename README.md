@@ -4,7 +4,7 @@
 [![Total Downloads](https://poser.pugx.org/aalfiann/parallel-request-php/downloads)](https://packagist.org/packages/aalfiann/parallel-request-php)
 [![License](https://poser.pugx.org/aalfiann/parallel-request-php/license)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
 
-A PHP class to create multiple request in parallel.
+A PHP class to create multiple request in parallel (non blocking).
 
 ## Installation
 
