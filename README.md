@@ -9,21 +9,10 @@ A PHP class to create multiple request in parallel (non blocking).
 ## Installation
 
 Install this package via [Composer](https://getcomposer.org/).
-
-1. For the first time project, you have to create the `composer.json` file, (skip to point 2, if you already have `composer.json`)  
-```
-composer init
-```
-
-2. Install
 ```
 composer require "aalfiann/parallel-request-php:^1.0"
 ```
 
-3. Done, for update in the future you can just run
-```
-composer update
-```
 
 ## Usage send GET request
 
