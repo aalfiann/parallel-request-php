@@ -10,7 +10,7 @@ namespace aalfiann;
      */
     class ParallelRequest {
 
-        var $request,$delayTime=10000,$encoded=false,$httpStatusOnly=false,$options=array(),$response=array();
+        var $request,$delayTime=10000,$encoded=false,$httpStatusOnly=false,$httpInfo=false,$options=array(),$response=array();
         
         /**
          * Set request
@@ -39,6 +39,16 @@ namespace aalfiann;
          */
         public function setHttpStatusOnly($httpStatusOnly=true){
             $this->httpStatusOnly = $httpStatusOnly;
+            return $this;
+        }
+
+        /**
+         * Set Http Info
+         * @param httpInfo = if set to true then the response will display the http info status. Set to "detail" for more info.
+         * @return this for chaining purpose
+         */
+        public function setHttpInfo($httpInfo=true){
+            $this->httpInfo = $httpInfo;
             return $this;
         }
 
@@ -133,8 +143,28 @@ namespace aalfiann;
                 if ($this->httpStatusOnly){
                     $result[$id] = curl_getinfo($c, CURLINFO_HTTP_CODE);
                 } else {
-                    $result[$id] = curl_multi_getcontent($c);
-                }    
+                    if ($this->httpInfo){
+                        if($this->httpInfo === 'detail'){
+                            $result[$id] = [
+                                'code' => curl_getinfo($c, CURLINFO_HTTP_CODE),
+                                'info' => [
+                                    'url' => curl_getinfo($c, CURLINFO_EFFECTIVE_URL),
+                                    'content_type' => curl_getinfo($c, CURLINFO_CONTENT_TYPE),
+                                    'content_length' => curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD),
+                                    'total_time' => curl_getinfo($c, CURLINFO_TOTAL_TIME)
+                                ],
+                                'response' => curl_multi_getcontent($c)
+                            ];
+                        } else {
+                            $result[$id] = [
+                                'code' => curl_getinfo($c, CURLINFO_HTTP_CODE),
+                                'response' => curl_multi_getcontent($c)
+                            ];
+                        }
+                    } else {
+                        $result[$id] = curl_multi_getcontent($c);
+                    }
+                }   
                 curl_multi_remove_handle($mh, $c);
             }
            
