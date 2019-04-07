@@ -23,11 +23,29 @@ namespace aalfiann;
         }
 
         /**
+         * Add request
+         * @param url = input the request url here (string only)
+         * @param params = is the array parameter data to be send for the request (array). This is optional and default is empty.
+         * @return this
+         */
+        public function addRequest($url,$params=array()){
+            if(!empty($params)){
+                $this->request[] = [
+                    'url' => $url,
+                    'post' => $params
+                ];
+            } else {
+                $this->request[] = $url;
+            }
+            return $this;
+        }
+
+        /**
          * Set cURL options
          * @param options = create your multiple cURL options into array
          * @return this for chaining purpose 
          */
-        public function setOption($options=array()){
+        public function setOptions($options=array()){
             $this->options = $options;
             return $this;
         }
@@ -77,6 +95,9 @@ namespace aalfiann;
          * @return this for chaining purpose
          */
         public function send() {
+
+            // cleanup any response
+            $this->response = array();
  
             // array of curl handles
             $curly = array();
@@ -164,7 +185,7 @@ namespace aalfiann;
                     } else {
                         $result[$id] = curl_multi_getcontent($c);
                     }
-                }   
+                }
                 curl_multi_remove_handle($mh, $c);
             }
            

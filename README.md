@@ -1,6 +1,6 @@
 # ParallelRequest PHP
 
-[![Version](https://img.shields.io/badge/stable-1.1.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
+[![Version](https://img.shields.io/badge/stable-1.2.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
 [![Total Downloads](https://poser.pugx.org/aalfiann/parallel-request-php/downloads)](https://packagist.org/packages/aalfiann/parallel-request-php)
 [![License](https://poser.pugx.org/aalfiann/parallel-request-php/license)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
 
@@ -19,11 +19,19 @@ composer require "aalfiann/parallel-request-php:^1.0"
 This will send GET request silently without response output.
 
 ```php
-require_once ('vendor/autoload.php');
 use \aalfiann\ParallelRequest;
+require_once ('vendor/autoload.php');
 
 $req = new ParallelRequest;
+
+// You can set request with simple array like this
 $req->request = ['https://jsonplaceholder.typicode.com/posts/1','https://jsonplaceholder.typicode.com/posts/2'];
+
+// Or you can set request array with addRequest() function
+for($i=1;$i<3;$i++){
+    $req->addRequest('https://jsonplaceholder.typicode.com/posts/'.$i);
+}
+
 $req->options = [
     CURLOPT_NOBODY => false,
     CURLOPT_HEADER => false,
@@ -42,10 +50,12 @@ echo var_dump($req->send()->getResponse());
 ## Usage send POST request
 
 ```php
-require_once ('vendor/autoload.php');
 use \aalfiann\ParallelRequest;
+require_once ('vendor/autoload.php');
 
 $req = new ParallelRequest;
+
+// You can set post request with array formatted like this
 $req->request = [
         [
             'url' => 'https://jsonplaceholder.typicode.com/posts',
@@ -64,6 +74,17 @@ $req->request = [
             ]
         ]
     ];
+
+// Or you can set request array with addRequest() function
+$req->setRequest(array()); //==> cleanup any request first (optional)
+for($i=1;$i<3;$i++){
+    $req->addRequest('https://jsonplaceholder.typicode.com/posts',[
+        'title' => 'foo '.$i,
+        'body' => 'bar '.$i,
+        'userId' => $i
+    ]);
+}
+
 $req->encoded = true;
 $req->options = [
     CURLOPT_NOBODY => false,
@@ -80,9 +101,12 @@ echo var_dump($req->send()->getResponse());
 If you want to send custom request like PUT, PATCH, DELETE, etc.  
 Just add the `CURLOPT_CUSTOMREQUEST => 'PUT'`.  
 ```php
-require_once ('vendor/autoload.php');
 use \aalfiann\ParallelRequest;
+require_once ('vendor/autoload.php');
+
 $req = new ParallelRequest;
+
+// You can set post request with array formatted like this
 $req->request = [
         [
             'url' => 'https://jsonplaceholder.typicode.com/posts/1',
@@ -103,6 +127,19 @@ $req->request = [
             ]
         ]
     ];
+
+// Or you can set request array with addRequest() function
+$req->setRequest(array()); //==> cleanup any request first (optional)
+for($i=1;$i<3;$i++){
+    $req->addRequest('https://jsonplaceholder.typicode.com/posts/'.$i,[
+        'id' => $i,
+        'title' => 'foo '.$i,
+        'body' => 'bar '.$i,
+        'userId' => $i
+    ]);
+}
+
+$req->encoded = true;
 $req->options = [
     CURLOPT_NOBODY => false,
     CURLOPT_HEADER => false,
@@ -118,14 +155,75 @@ echo var_dump($req->send()->getResponse());
 ## Chain Usage
 You also able to make chain.
 ```php
-require_once ('vendor/autoload.php');
 use \aalfiann\ParallelRequest;
+require_once ('vendor/autoload.php');
+
 $req = new ParallelRequest;
+
+// example simple request
 echo $req->setRequest('http://jsonplaceholder.typicode.com/posts')->send()->getResponse();
+
+// example complicated request
+echo var_dump($req->
+    ->setRequest(array()) //==> cleanup any request first (optional)
+    ->addRequest('https://jsonplaceholder.typicode.com/posts',[
+        'title' => 'foo 1',
+        'body' => 'bar 1',
+        'userId' => 1
+    ])
+    ->addRequest('https://jsonplaceholder.typicode.com/posts/1')
+    ->addRequest('https://jsonplaceholder.typicode.com/posts',[
+        'title' => 'foo 2',
+        'body' => 'bar 2',
+        'userId' => 2
+    ])
+    ->setOptions([
+        CURLOPT_NOBODY => false,
+        CURLOPT_HEADER => false,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false
+    ])
+    ->setEncoded()->setHttpInfo()->send()->getResponse());
+```
+
+## Difference setRequest() and addRequest()
+Both functions are required to build the request.  
+
+`setRequest()` is need you to create the string / formatted array first before use this.  
+Example:  
+```php
+// build the formatted array first
+$request = [
+        'https://jsonplaceholder.typicode.com/posts/1',
+        [
+            'url' => 'https://jsonplaceholder.typicode.com/posts/2',
+            'post' => [
+                'title' => 'foo 2',
+                'body' => 'bar 2',
+                'userId' => 2
+            ]
+        ]
+    ];
+
+// then you can use setRequest() function
+setRequest($request);
+```
+
+`addRequest()` is you can create string / formatted array on the fly  
+Example:  
+```php
+addRequest('https://jsonplaceholder.typicode.com/posts/1');
+addRequest('https://jsonplaceholder.typicode.com/posts',[
+        'title' => 'foo 2',
+        'body' => 'bar 2',
+        'userId' => 2
+    ]);
 ```
 
 ## Function List
 - **setRequest($request)** is to create the request url (string or array with post data).
+- **addRequest($url,$params=array())** is to create the request url (string or array with params data).
 - **setOptions($options=array())** is to set the options of CURLOPT.
 - **setHttpStatusOnly($httpStatusOnly=false)** if set to true then output response will converted to http status code.
 - **setHttpInfo($httpInfo=false)** if set to true then output response will display the http info status. Set to "detail" for more info.
