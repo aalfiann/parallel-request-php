@@ -1,6 +1,6 @@
 # ParallelRequest PHP
 
-[![Version](https://img.shields.io/badge/stable-1.2.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
+[![Version](https://img.shields.io/badge/stable-1.3.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
 [![Total Downloads](https://poser.pugx.org/aalfiann/parallel-request-php/downloads)](https://packagist.org/packages/aalfiann/parallel-request-php)
 [![License](https://poser.pugx.org/aalfiann/parallel-request-php/license)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
 
