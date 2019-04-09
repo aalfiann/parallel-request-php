@@ -1,6 +1,6 @@
 # ParallelRequest PHP
 
-[![Version](https://img.shields.io/badge/stable-1.3.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
+[![Version](https://img.shields.io/badge/stable-1.4.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
 [![Total Downloads](https://poser.pugx.org/aalfiann/parallel-request-php/downloads)](https://packagist.org/packages/aalfiann/parallel-request-php)
 [![License](https://poser.pugx.org/aalfiann/parallel-request-php/license)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
 
@@ -177,6 +177,9 @@ echo var_dump($req->
         'body' => 'bar 2',
         'userId' => 2
     ])
+    ->addRequest('https://jsonplaceholder.typicode.com/posts',[
+        'userId' => 3
+    ],false)
     ->setOptions([
         CURLOPT_NOBODY => false,
         CURLOPT_HEADER => false,
@@ -187,13 +190,27 @@ echo var_dump($req->
     ->setEncoded()->setHttpInfo()->send()->getResponse());
 ```
 
-## Difference setRequest() and addRequest()
-Both functions are required to build the request.  
+## How to debug
+To send a request absolutely we need to know what happened in our request  
+```php
+// to see the detail of request
+$req->httpInfo = 'detail';
+
+// or use chain function like this
+$req->setHttpInfo('detail')
+
+// or if you want only http code info
+$req->setHttpInfo()
+```
+
+## Difference setRequest() and addRequest() and addRequestRaw()
+This three functions are required to build the request.  
 
 `setRequest()` is need you to create the string / formatted array first before use this.  
 Example:  
 ```php
-// build the formatted array first
+// build the formatted array first.
+// You are able to create more complex form-data or raw data.
 $request = [
         'https://jsonplaceholder.typicode.com/posts/1',
         [
@@ -203,32 +220,71 @@ $request = [
                 'body' => 'bar 2',
                 'userId' => 2
             ]
+        ],
+        [
+            'url' => 'https://jsonplaceholder.typicode.com/posts',
+            'post' => json_encode([
+                'title' => 'foo 3',
+                'body' => 'bar 3',
+                'userId' => 3
+            ])
         ]
     ];
 
 // then you can use setRequest() function
-setRequest($request);
+$req->setRequest($request);
 ```
 
 `addRequest()` is you can create string / formatted array on the fly  
 Example:  
 ```php
-addRequest('https://jsonplaceholder.typicode.com/posts/1');
-addRequest('https://jsonplaceholder.typicode.com/posts',[
+// url only
+$req->addRequest('https://jsonplaceholder.typicode.com/posts/1');
+
+// send request with form-data
+$req->addRequest('https://jsonplaceholder.typicode.com/posts',[
         'title' => 'foo 2',
         'body' => 'bar 2',
         'userId' => 2
     ]);
+
+// send request with data parameter on url
+$req->addRequest('https://jsonplaceholder.typicode.com/posts',[
+        'userId' => 3
+    ],false);
+```
+
+`addRequestRaw()` is you can create raw data to send through request  
+Example:  
+```php
+// url with raw json data
+// setEncoded(true) or $req->encoded = true will not work, so you have to encoded this by yourself
+$req->addRequestRaw('https://jsonplaceholder.typicode.com/posts',json_encode([
+        'title' => 'foo 2',
+        'body' => 'bar 2',
+        'userId' => 2
+    ]));
+
+// http header is required to send raw json data
+$req->options = [
+    CURLOPT_NOBODY => false,
+    CURLOPT_HEADER => false,
+    CURLOPT_HTTPHEADER => ['Content-type: application/json; charset=UTF-8'],
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_SSL_VERIFYHOST => false
+];
 ```
 
 ## Function List
 - **setRequest($request)** is to create the request url (string or array with post data).
-- **addRequest($url,$params=array())** is to create the request url (string or array with params data).
+- **addRequest($url,$params=array(),$formdata=true)** is to create the request url (string or array with params data).
+- **addRequestRaw($url,$data)** is to create the request url with raw data formatted. Parameter data is not encoded by default.
 - **setOptions($options=array())** is to set the options of CURLOPT.
 - **setHttpStatusOnly($httpStatusOnly=false)** if set to true then output response will converted to http status code.
 - **setHttpInfo($httpInfo=false)** if set to true then output response will display the http info status. Set to "detail" for more info.
 - **setDelayTime($time=10000)** is the delay execution time for cpu to take a rest. Default is 10000 (10ms) in microseconds.
-- **setEncoded($encoded=true)** is to encode the data post. If you did not use this, the default data post is not encoded.
+- **setEncoded($encoded=true)** is to encode the data post. The default data post is not encoded so you can create more complex data request.
 - **send()** is curl are sending the request (silently without any output)
 - **getResponse()** is to get the output response (the return data could be string or array).
 - **getResponseJson()** is to get the output response with json formatted.

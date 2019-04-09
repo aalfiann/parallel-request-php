@@ -26,17 +26,36 @@ namespace aalfiann;
          * Add request
          * @param url = input the request url here (string only)
          * @param params = is the array parameter data to be send for the request (array). This is optional and default is empty.
+         * @param formdata = if set to false then will convert params array to url parameter. Default is true means as form-data.
          * @return this
          */
-        public function addRequest($url,$params=array()){
+        public function addRequest($url,$params=array(),$formdata=true){
             if(!empty($params)){
-                $this->request[] = [
-                    'url' => $url,
-                    'post' => $params
-                ];
+                if ($formdata){
+                    $this->request[] = [
+                        'url' => $url,
+                        'post' => $params
+                    ];
+                } else {
+                    $this->request[] = $url.'?'.(!empty($params)?http_build_query($params,'','&'):'');
+                }
             } else {
                 $this->request[] = $url;
             }
+            return $this;
+        }
+
+        /**
+         * Add request for raw data
+         * @param url = input the request url here (string only)
+         * @param data = is the raw data to be send for the request. This is required and not encoded by default.
+         * @return this
+         */
+        public function addRequestRaw($url,$data){
+            $this->request[] = [
+                'url' => $url,
+                'post' => $data
+            ];
             return $this;
         }
 
@@ -124,7 +143,7 @@ namespace aalfiann;
                 if (is_array($d)) {
                     if (!empty($d['post'])) {
                         curl_setopt($curly[$id], CURLOPT_POST,       1);
-                        if ($this->encoded) {
+                        if ($this->encoded && is_array($d['post'])) {
                             curl_setopt($curly[$id], CURLOPT_POSTFIELDS, http_build_query($d['post']));
                         } else {
                             curl_setopt($curly[$id], CURLOPT_POSTFIELDS, $d['post']);
