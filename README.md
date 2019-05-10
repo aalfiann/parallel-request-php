@@ -1,8 +1,8 @@
 # ParallelRequest PHP
 
-[![Version](https://img.shields.io/badge/stable-1.4.0-green.svg)](https://github.com/aalfiann/parallel-request-php)
-[![Total Downloads](https://poser.pugx.org/aalfiann/parallel-request-php/downloads)](https://packagist.org/packages/aalfiann/parallel-request-php)
-[![License](https://poser.pugx.org/aalfiann/parallel-request-php/license)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
+[![Version](https://img.shields.io/packagist/v/aalfiann/parallel-request-php.svg)](https://packagist.org/packages/aalfiann/parallel-request-php)
+[![Downloads](https://img.shields.io/packagist/dt/aalfiann/parallel-request-php.svg)](https://packagist.org/packages/aalfiann/parallel-request-php)
+[![License](https://img.shields.io/packagist/l/aalfiann/parallel-request-php.svg)](https://github.com/aalfiann/parallel-request-php/blob/HEAD/LICENSE.md)
 
 A PHP class to create multiple request in parallel (non blocking).
 

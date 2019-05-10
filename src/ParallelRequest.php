@@ -159,6 +159,20 @@ namespace aalfiann;
                     curl_setopt($curly[$id], CURLOPT_RETURNTRANSFER, 1);
                 }
 
+                // get request headers for httpInfo detail only
+                if ($this->httpInfo && $this->httpInfo == 'detail') {
+                    curl_setopt($curly[$id], CURLINFO_HEADER_OUT, 1);
+                    $resheaders = [];
+                    curl_setopt($curly[$id], CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$resheaders) {
+                        $len = strlen($header);
+                        $header = explode(':', $header, 2);
+                        if (count($header) >= 2) {
+                            $resheaders[trim($header[0])] = trim($header[1]);
+                        }
+                        return $len;
+                    });
+                }
+
                 // activate curl response message
                 if($this->httpInfo === 'detail'){
                     if (empty($this->options[CURLOPT_FAILONERROR]) || (!empty($this->options[CURLOPT_FAILONERROR]) && $this->options[CURLOPT_FAILONERROR] == false)){
@@ -195,11 +209,27 @@ namespace aalfiann;
                     if ($this->httpInfo){
                         $curl_errno = curl_errno($c);
                         if($this->httpInfo === 'detail'){
+                            $reqheaders = [];
+                            $outHeaders = explode("\r\n", curl_getinfo($c, CURLINFO_HEADER_OUT));
+                            $outHeaders = array_filter($outHeaders, function($value) use (&$reqheaders) { 
+                                $len = strlen($value);
+                                $value = explode(':', $value, 2);
+                                if (count($value) >= 2) {
+                                    $reqheaders[trim($value[0])] = trim($value[1]);
+                                } else {
+                                    if(!empty(trim($value[0]))) $reqheaders[] = trim($value[0]);
+                                }
+                                return $len;
+                            });
                             $http_code = curl_getinfo($c, CURLINFO_HTTP_CODE);
                             $curl_error = curl_error($c);
                             $result[$id] = [
                                 'code' => $http_code,
                                 'info' => [
+                                    'headers' => [
+                                        'request' => $reqheaders,
+                                        'response' => $resheaders,
+                                    ],
                                     'url' => curl_getinfo($c, CURLINFO_EFFECTIVE_URL),
                                     'content_type' => curl_getinfo($c, CURLINFO_CONTENT_TYPE),
                                     'content_length' => curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD),
