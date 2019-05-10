@@ -11,7 +11,7 @@ namespace aalfiann;
     class ParallelRequest {
 
         var $request,$delayTime=10000,$encoded=false,$httpStatusOnly=false,$httpInfo=false,$options=array(),$response=array();
-        
+
         /**
          * Set request
          * @param request = input the request url here (string or array)
@@ -119,7 +119,140 @@ namespace aalfiann;
 
             // cleanup any response
             $this->response = array();
- 
+
+            // make sure request is array
+            if (is_string($this->request)) $this->request = array($this->request);
+
+            if(count($this->request) <= 1){
+                $this->exec();
+            } else {
+                $this->exec_multi();
+            }
+
+            return $this;
+        }
+
+        /**
+         * Execute Single Request
+         */
+        private function exec() {
+            // data to be returned
+            $result = array();
+            
+            // create curl resource 
+            $ch = curl_init();
+
+            $d = $this->request[0];
+            $url = (is_array($d) && !empty($d['url'])) ? $d['url'] : $d;
+            curl_setopt($ch, CURLOPT_URL, $url);
+            if ($this->httpStatusOnly) curl_setopt($ch, CURLOPT_NOBODY, 1);
+
+            // contains data to post?
+            if (is_array($d)) {
+                if (!empty($d['post'])) {
+                    curl_setopt($ch, CURLOPT_POST,       1);
+                    if ($this->encoded && is_array($d['post'])) {
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($d['post']));
+                    } else {
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, $d['post']);
+                    }
+                }
+            }
+
+            // set options?
+            if (!empty($this->options)) {
+                curl_setopt_array($ch, $this->options);
+            } else {
+                curl_setopt($ch, CURLOPT_HEADER,         0);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            }
+
+            // get request headers for httpInfo detail only
+            if ($this->httpInfo && $this->httpInfo == 'detail') {
+                curl_setopt($ch, CURLINFO_HEADER_OUT, 1);
+                $resheaders = [];
+                curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$resheaders) {
+                    $len = strlen($header);
+                    $header = explode(':', $header, 2);
+                    if (count($header) >= 2) {
+                        $resheaders[trim($header[0])] = trim($header[1]);
+                    }
+                    return $len;
+                });
+            }
+
+            // activate curl response message
+            if($this->httpInfo === 'detail'){
+                if (empty($this->options[CURLOPT_FAILONERROR]) || (!empty($this->options[CURLOPT_FAILONERROR]) && $this->options[CURLOPT_FAILONERROR] == false)){
+                    curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+                }
+            }
+
+            $content = curl_exec($ch); // execute request
+
+            if ($this->httpStatusOnly){
+                $result = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            } else {
+                if ($this->httpInfo){
+                    $curl_errno = curl_errno($ch);
+                    if($this->httpInfo === 'detail'){
+                        $reqheaders = [];
+                        $outHeaders = explode("\r\n", curl_getinfo($ch, CURLINFO_HEADER_OUT));
+                        $outHeaders = array_filter($outHeaders, function($value) use (&$reqheaders) { 
+                            $len = strlen($value);
+                            $value = explode(':', $value, 2);
+                            if (count($value) >= 2) {
+                                $reqheaders[trim($value[0])] = trim($value[1]);
+                            } else {
+                                $dt = trim($value[0]);
+                                if(!empty($dt)) {
+                                    $dt = explode(' ', $dt);
+                                    if (!empty($dt[0])) $reqheaders['Method'] = $dt[0];
+                                    if (!empty($dt[1])) $reqheaders['Path'] = $dt[1];
+                                    if (!empty($dt[2])) $reqheaders['Protocol'] = $dt[2];
+                                }
+                            }
+                            return $len;
+                        });
+                        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                        $curl_error = curl_error($ch);
+                        $result = [
+                            'code' => $http_code,
+                            'info' => [
+                                'headers' => [
+                                    'request' => $reqheaders,
+                                    'response' => $resheaders,
+                                ],
+                                'url' => curl_getinfo($ch, CURLINFO_EFFECTIVE_URL),
+                                'content_type' => curl_getinfo($ch, CURLINFO_CONTENT_TYPE),
+                                'content_length' => curl_getinfo($ch, CURLINFO_CONTENT_LENGTH_DOWNLOAD),
+                                'total_time' => curl_getinfo($ch, CURLINFO_TOTAL_TIME),
+                                'debug' => 'CURLcode ['.$curl_errno.']: '.$this->getCurlCode($curl_errno),
+                                'message' => (($curl_error)?$curl_error:(($http_code == 0)?'The requested URL returned error: Unknown':'Request URL finished'))
+                            ],
+                            'response' => $content
+                        ];
+                    } else {
+                        $result = [
+                            'code' => curl_getinfo($ch, CURLINFO_HTTP_CODE),
+                            'debug' => $this->getCurlCode($curl_errno),
+                            'response' => $content
+                        ];
+                    }
+                } else {
+                    $result = $content;
+                }
+            }
+           
+            // close when all is done
+            curl_close($ch);
+            $this->response = $result;
+        }
+        
+        /**
+         * Execute Multi Request
+         */
+        private function exec_multi() {
             // array of curl handles
             $curly = array();
             
@@ -128,9 +261,6 @@ namespace aalfiann;
             
             // multi handle
             $mh = curl_multi_init();
-            
-            // make sure request is array
-            if (is_string($this->request)) $this->request = array($this->request);
            
             // loop through data request and create curl handles then add them to the multi-handle
             foreach ($this->request as $id => $d) {
@@ -217,7 +347,13 @@ namespace aalfiann;
                                 if (count($value) >= 2) {
                                     $reqheaders[trim($value[0])] = trim($value[1]);
                                 } else {
-                                    if(!empty(trim($value[0]))) $reqheaders[] = trim($value[0]);
+                                    $dt = trim($value[0]);
+                                    if(!empty($dt)) {
+                                        $dt = explode(' ', $dt);
+                                        if (!empty($dt[0])) $reqheaders['Method'] = $dt[0];
+                                        if (!empty($dt[1])) $reqheaders['Path'] = $dt[1];
+                                        if (!empty($dt[2])) $reqheaders['Protocol'] = $dt[2];
+                                    }
                                 }
                                 return $len;
                             });
@@ -255,14 +391,9 @@ namespace aalfiann;
            
             // close when all is done
             curl_multi_close($mh);
-            if (count($result) <= 1) {
-                $this->response = $result[0];
-            } else {
-                $this->response = $result;
-            }
-            return $this;
+            $this->response = $result;
         }
-        
+
         /**
          * Get response from request
          * @return mixed array or string
